@@ -1,3 +1,5 @@
+library(dplyr)
+
 assign_cdr_clusters_faster <- function(unique_cdr3, pcnt_identity_threshold, length_diff_threshold = 2){
   
   unique_cdr3_dat <- data.frame(cdr = unique_cdr3, len = nchar(unique_cdr3)) %>% arrange(len)

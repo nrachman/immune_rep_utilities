@@ -1,5 +1,51 @@
 library(dplyr)
 
+assign_cdr_clusters_seed <- function(unique_cdr3, pcnt_identity_threshold, length_diff_threshold = 2){
+  
+  unique_cdr3_dat <- data.frame(cdr = unique_cdr3, len = nchar(unique_cdr3)) %>% arrange(len)
+
+  min_length <- min(unique_cdr3_dat$len)
+  max_length <- max(unique_cdr3_dat$len)
+  length_windows_start <- seq(min_length, max_length - length_diff_threshold)
+  length_windows_end <- length_windows_start + length_diff_threshold
+
+  edge_list <- c()
+  for(i in seq_along(length_windows_start)){
+    print(paste("window start", length_windows_start[i]))
+    seq_to_compare <- unique_cdr3_dat %>% filter(len %in% length_windows_start[i]:length_windows_end[i]) %>% pull(cdr)
+    adjacency_mat <- get_pcnt_ident(seq_to_compare)
+    #diag(adjacency_mat) <- 0
+
+    names_mat <- outer(seq_to_compare, seq_to_compare, FUN = paste)
+    names_vec <- as.vector(names_mat)
+    adjacency_vec <- as.vector(adjacency_mat)
+    edge_list <- c(edge_list, names_vec[adjacency_vec > pcnt_identity_threshold])
+
+  }
+  edge_list <- unique(edge_list)
+
+  edge_list <- str_split(edge_list, " ")
+  edge_dat <- matrix(ncol = 2, nrow = length(edge_list))
+  edge_dat[,1] <- sapply(edge_list, `[[`, 1)
+  edge_dat[,2] <- sapply(edge_list, `[[`, 2)
+  colnames(edge_dat) <- c("to", "from")
+  edge_dat <- data.frame(edge_dat) #%>% arrange(to)
+
+  multi_clusts <- edge_dat %>% group_by(to) %>% summarise(n = n()) %>% filter(n > 1) %>% pull(to)
+  singletons <- edge_dat %>% filter(!to %in% multi_clusts) %>% pull(to)
+
+  edge_dat_sub <- edge_dat %>% filter(to %in% multi_clusts)
+
+  seeds <- unique(edge_dat_sub$to)
+  names(seeds) <- seeds
+
+  clust_list <- lapply(seeds, function(seed){
+    edge_dat %>% filter(to == seed) %>% pull(from)
+  })
+
+  list(clust_list = clust_list, singletons = singletons, edge_dat = edge_dat)
+}
+
 assign_cdr_clusters_faster <- function(unique_cdr3, pcnt_identity_threshold, length_diff_threshold = 2){
   
   unique_cdr3_dat <- data.frame(cdr = unique_cdr3, len = nchar(unique_cdr3)) %>% arrange(len)

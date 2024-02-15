@@ -33,12 +33,6 @@ assign_cdr_clusters_faster <- function(unique_cdr3, pcnt_identity_threshold, len
   enframe(components(g)$membership, "cdr", "membership")
 }
 
-#cdrH3_clust <- assign_cdr_clusters_faster(unique_cdrH3[1:1000], .8, length_diff_threshold = 0)
-table(table(cdrH3_clust$membership))
-#cdrH3_clust <- assign_cdr_clusters_faster(unique_cdrH3[1:1000], .8, length_diff_threshold = 2)
-#table(table(cdrH3_clust$membership))
-
-
 get_pcnt_ident <- function(unique_cdr3){
   edit_dist_mat <- adist(unique_cdr3, counts = TRUE)
 

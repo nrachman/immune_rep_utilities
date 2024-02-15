@@ -1,3 +1,5 @@
+library(dplyr)
+
 aa_cdist <- function(contig_dat, consensus_dat){
   contig_dat <- contig_dat %>% add_cdr_concat_cols()
 
